@@ -1252,3 +1252,8 @@ schools:
     name: "山东财经大学"
     initial: "S"
     resource_folder: "SDUFE"
+
+  - id: "CCSUT"
+    name: "长沙工业学院"
+    initial: "C"
+    resource_folder: "CCSUT"
