@@ -1262,3 +1262,8 @@ schools:
     name: "景德镇艺术职业大学"
     initial: "J"
     resource_folder: "JDZVUA"
+
+  - id: "ZWU"
+    name: "浙江万里学院"
+    initial: "Z"
+    resource_folder: "ZWU"
