@@ -1,17 +1,13 @@
 // 中国海洋大学(ouc.edu.cn) 拾光课程表适配脚本 v3
-// 基于强智教务系统网络请求方式导入
-// 流程：确认登录 -> 拉取学期列表 -> 用户选择学期 -> 拉取教学周历 -> 请求课表 -> 选择校区作息 -> 保存课程/作息/配置
+// 基于强智教务系统网络请求方式导入 流程：确认登录 -> 拉取学期列表 -> 用户选择学期 -> 拉取教学周历 -> 请求课表 -> 选择校区作息 -> 保存课程/作息/配置
 
 const BASE_URL = "https://jwgl2024.ouc.edu.cn";
 const URL_COURSE   = `${BASE_URL}/jsxsd/xskb/xskb_list.do`; 
 const URL_CALENDAR = `${BASE_URL}/jsxsd/jxzl/jxzl_query`; 
-
 const KBJCMSID = "16FD8C2BE55E15F9E0630100007FF6B5";
-
 
 function pad2(n) { return String(n).padStart(2, "0"); }
 
-/** 解析周次文本*/
 function parseWeeks(weekStr) {
     const weeks = [];
     if (!weekStr) return weeks;
@@ -24,14 +20,9 @@ function parseWeeks(weekStr) {
         if (!seg) return;
         const m = seg.match(/^(\d+)\s*-\s*(\d+)$/);
         let start, end;
-        if (m) {
-            start = Number(m[1]);
-            end = Number(m[2]);
-        } else if (/^\d+$/.test(seg)) {
-            start = end = Number(seg);
-        } else {
-            return;
-        }
+        if (m) { start = Number(m[1]); end = Number(m[2]); }
+        else if (/^\d+$/.test(seg)) { start = end = Number(seg); }
+        else { return; }
         for (let w = start; w <= end; w++) {
             if (isSingle && w % 2 === 0) continue;
             if (isDouble && w % 2 !== 0) continue;
@@ -41,17 +32,10 @@ function parseWeeks(weekStr) {
     return [...new Set(weeks)].sort((a, b) => a - b);
 }
 
-/** 课程合并去重 */
 function mergeAndDistinctCourses(courses) {
     if (!Array.isArray(courses) || courses.length <= 1) return courses;
 
-    const list = courses.map(c => ({
-        ...c,
-        name: c.name || '',
-        teacher: c.teacher || '',
-        position: c.position || '',
-        weeks: Array.isArray(c.weeks) ? [...c.weeks].sort((a, b) => a - b) : []
-    }));
+    const list = courses.map(c => ({ ...c, name: c.name || '', teacher: c.teacher || '', position: c.position || '', weeks: Array.isArray(c.weeks) ? [...c.weeks].sort((a, b) => a - b) : [] }));
 
     list.sort((a, b) => {
         return (a.name || '').localeCompare(b.name || '') ||
@@ -110,7 +94,6 @@ function mergeAndDistinctCourses(courses) {
 }
 
 // 课表解析
-
 function parseCourseItem(li, day) {
     const titleEl = li.querySelector && li.querySelector(".qz-hasCourse-title");
     const name = titleEl ? titleEl.textContent.trim() : "";
@@ -142,7 +125,6 @@ function parseCourseItem(li, day) {
     return { name, teacher, position, day, startSection, endSection, weeks };
 }
 
-/** 从课表页面解析全部课程 */
 function parseTimetableToModel(doc) {
     const table = doc.querySelector("table.qz-weeklyTable");
     if (!table) return [];
@@ -183,7 +165,6 @@ function parseSemesterOptions(doc) {
     return { list, defaultIndex: localDefault };
 }
 
-/** 解析教学周历页面 */
 function parseCalendarRows(doc) {
     const rows = [];
     const table = doc.querySelector("table.qz-weeklyTable") || doc.querySelector("table");
@@ -275,7 +256,6 @@ async function requestText(url) {
     return await resp.text();
 }
 
-/** 保存课表配置 */
 function buildCourseConfig(semesterStartDate, totalWeeks) {
     const config = {
         semesterTotalWeeks: totalWeeks || 20,
@@ -321,7 +301,6 @@ async function importPresetTimeSlots(timeSlots) {
     }
 }
 
-/** 崂山/鱼山校区作息 */
 const LAOSHAN_TIME_SLOTS = [
     { number: 1, startTime: "08:00", endTime: "08:50" },
     { number: 2, startTime: "09:00", endTime: "09:50" },
@@ -337,7 +316,6 @@ const LAOSHAN_TIME_SLOTS = [
     { number: 12, startTime: "20:30", endTime: "21:20" }
 ];
 
-/** 西海岸校区作息：上午前四节不同，下午及晚间与崂山相同 */
 const WEST_COAST_TIME_SLOTS = [
     { number: 1, startTime: "08:30", endTime: "09:20" },
     { number: 2, startTime: "09:25", endTime: "10:15" },
